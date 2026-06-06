@@ -1,8 +1,12 @@
 package com.student.studentinfo.controller;
 
 import com.student.studentinfo.entity.User;
+
 import com.student.studentinfo.repository.UserRepository;
+
 import com.student.studentinfo.security.JwtService;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.web.bind.annotation.*;
 
@@ -16,13 +20,21 @@ public class AuthController {
 
     private final JwtService jwtService;
 
+    private final PasswordEncoder passwordEncoder;
+
     public AuthController(
+
             UserRepository repository,
 
-            JwtService jwtService) {
+            JwtService jwtService,
+
+            PasswordEncoder passwordEncoder) {
 
         this.repository = repository;
+
         this.jwtService = jwtService;
+
+        this.passwordEncoder = passwordEncoder;
     }
 
     // REGISTER
@@ -31,6 +43,13 @@ public class AuthController {
 
     public User register(
             @RequestBody User user) {
+
+        user.setPassword(
+
+                passwordEncoder.encode(
+                        user.getPassword())
+
+        );
 
         return repository.save(user);
     }
@@ -48,8 +67,11 @@ public class AuthController {
 
                 .orElseThrow();
 
-        if(existingUser.getPassword()
-                .equals(user.getPassword())) {
+        if(passwordEncoder.matches(
+
+                user.getPassword(),
+
+                existingUser.getPassword())) {
 
             return jwtService.generateToken(
                     user.getEmail());
